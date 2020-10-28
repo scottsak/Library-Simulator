@@ -38,6 +38,21 @@ public class JDBCSampleSource {
             return input;
     }
     
+   public static int inputValidation(Scanner input){
+        int user_input; 
+        do {
+            System.out.println("Please enter a number from the menu: ");
+            while (!input.hasNextInt()) {
+                System.out.println("\nPlease enter an integer number: ");
+                input.next();
+            }
+            user_input = input.nextInt();
+        } while (user_input < 1 || user_input > 10);
+
+        input.nextLine();
+        return user_input;
+    };
+   
    
     public static int menu()
     {
@@ -50,7 +65,25 @@ public class JDBCSampleSource {
                 + "\n10) Exit");
         
         Scanner in = new Scanner(System.in);
-        int choice = in.nextInt();
+        int choice=1001;
+        while(choice >=11 || choice <=0){
+            try{
+                System.out.println("Input an Integer between 1-10");
+                choice = in.nextInt();
+                if(choice <=0 || choice >=11){
+                    throw new IllegalAccessException();
+                }
+            }
+            catch(InputMismatchException m){
+                System.out.println("Not an Integer \nPlease Try Again");
+                in.next();
+            }
+            catch(IllegalAccessException i){
+                System.out.println("Not in Range \nPlease Try Again");
+                
+            }
+        }
+        //int choice = in.nextInt();
         return choice;
     }
 
@@ -87,7 +120,9 @@ public class JDBCSampleSource {
             {
                 choice = menu();
                 
+                
                 switch(choice){
+                    //list writing groups
                     case 1:
                         
                         sql = "SELECT GroupName, HeadWriter, YearFormed, Subject FROM WritingGroups";
@@ -110,100 +145,128 @@ public class JDBCSampleSource {
                         rs.close();
                         break;
                     
-                    case 2:
-              
-
+                    //Show writing group information
+                    case 2: 
+                        //case 2: list all data for a group specified by the user
                         System.out.print("Enter the WritingGroup Name: ");
-                        String a = in.nextLine();
+                        String grp = in.nextLine();
+                        
+                        sql = "select groupname from writinggroups where groupname = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1,grp);
+                        rs=pstmt.executeQuery();
+                        
+                        if(false==rs.next()){
+                            System.out.println("Group Name Does Not Exist");
+                            break;
+                        }
 
                         //shows what the user input
-                        System.out.println("\nLooking for " + a + ", One moment please...");
-
-                        stmt = conn.createStatement();
-                        sql = "SELECT * FROM WritingGroups INNER JOIN Books USING (GroupName) INNER JOIN Publishers USING (PublisherName)"; 
-                        rs = stmt.executeQuery(sql);        
-
-                         System.out.printf(displayFormatOp2, "Group Name", "Head Writer", "Year Formed", "Subject", "Publisher Name", 
-                                "Publisher Address", "Publisher Phone", "Publisher Email", "Book Title", "Year Published", "Num Of Pages");
+                        System.out.println("\nLooking for " + grp + ", One moment please...");
+                        System.out.println();
+                        sql = "SELECT * FROM WritingGroups NATURAL JOIN Books NATURAL JOIN Publishers where GroupName = ?";    
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1, grp);
+                        rs = pstmt.executeQuery();                        
+                        System.out.printf(displayFormatOp5, "Publisher Name", "Group Name", "Head Writer", "Year Formed", "Subject", 
+                            "Book Title", "Year Published", "Num of Pages", "Publisher Address", "Publisher Phone", "Publisher Email");
                         while(rs.next()){
-                             String GroupName = rs.getString("GroupName");
-                             if(GroupName.equals(a)){
-                                String HeadWriter = rs.getString("HeadWriter");
-                                int YearFormed = rs.getInt("YearFormed");
-                                String Subject = rs.getString("Subject");
-                                String PublisherName = rs.getString("PublisherName");
-                                String PublisherAddress = rs.getString("PublisherAddress");
-                                String PublisherPhone = rs.getString("PublisherPhone");
-                                String PublisherEmail = rs.getString("PublisherEmail");
-                                String BookTitle = rs.getString("Booktitle");
-                                int YearPublished = rs.getInt("Yearpublished");
-                                int NumberPages = rs.getInt("NumberPages"); 
+                            grp = rs.getString(1);                            
+                            String HeadWriter = rs.getString(2);
+                            String YearFormed = rs.getString(3);
+                            String Subject = rs.getString(4);
+                            String PublisherName = rs.getString(5);
+                            String PublisherAddress = rs.getString(6);
+                            String PublisherPhone = rs.getString(7);
+                            String PublisherEmail = rs.getString(8);
+                            String BookTitle = rs.getString(9);
+                            String YearPublished = rs.getString(10);
+                            String NumberPages = rs.getString(11);                          
 
-                                System.out.printf(displayFormatOp2, dispNull(GroupName), dispNull(HeadWriter), YearFormed, dispNull(Subject), 
-                                    dispNull(PublisherName), dispNull(PublisherAddress), dispNull(PublisherPhone), dispNull(PublisherEmail), 
-                                    dispNull(BookTitle), YearPublished, NumberPages);
-                                }
+                            System.out.printf(displayFormatOp5, dispNull(grp), dispNull(HeadWriter), dispNull(YearFormed), dispNull(Subject), 
+                                dispNull(PublisherName), dispNull(PublisherAddress), dispNull(PublisherPhone), dispNull(PublisherEmail), 
+                                dispNull(BookTitle), dispNull(YearPublished), dispNull(NumberPages));                               
                             }
                         System.out.println("");
-                        break;
-                     
+                        rs.close();
+                        break;  
+                        
+                    //List publisher Names
                     case 3:
                         
                         sql = "SELECT PublisherName, PublisherAddress, PublisherPhone, PublisherEmail FROM Publishers";
-                        ResultSet rp = stmt.executeQuery(sql);
+                        rs = stmt.executeQuery(sql);
 
                         System.out.printf(displayFormat, "PublisherName", "PublisherAddress", "PublisherPhone", "PublisherEmail");
-                        while(rp.next()) {
+                        while(rs.next()) {
                         //Retrieve by column name
-                            String PublisherName = rp.getString("PublisherName");
-                            String PublisherAddress = rp.getString("PublisherAddress");
-                            String PublisherPhone = rp.getString("PublisherPhone");
-                            String PublisherEmail = rp.getString("PublisherEmail");                      
+                            String PublisherName = rs.getString("PublisherName");
+                            String PublisherAddress = rs.getString("PublisherAddress");
+                            String PublisherPhone = rs.getString("PublisherPhone");
+                            String PublisherEmail = rs.getString("PublisherEmail");                      
 
                             //Display values
                             System.out.printf(displayFormat,
                                 dispNull(PublisherName), dispNull(PublisherAddress), dispNull(PublisherPhone), dispNull(PublisherEmail));
                         }
-                        rp.close();
+                        rs.close();
                         break;
 
-                
+                    //Show publisher Information
                     case 4:
-                         
-
+                        //case 4: list all the data for a publisher specified by the user
+                        
                         System.out.println("Enter a publisher's name ");
                         String pub = in.nextLine();
+                        
 
                         //shows what the user input
-                        System.out.println("\nLooking for info on publisher " + pub + ", One moment please...");
-
-                        stmt = conn.createStatement();
-                        sql = "SELECT * FROM Publishers INNER JOIN Books USING (PublisherName) INNER JOIN WritingGroups USING (GroupName)";
-                        rs = stmt.executeQuery(sql);
-
-                        System.out.printf(displayFormatOp4, "Publisher Name", "Publisher Address", "Publisher Phone", "Publisher Email",
-                                "Group Name", "Head Writer", "Year Formed", "Subject", "Book Title", "Year Published", "Num Of Pages");
-                        while(rs.next()){
-                            String PublisherName = rs.getString("PublisherName");
-                            if(PublisherName.equals(pub)){
-                                String HeadWriter = rs.getString("HeadWriter");
-                                int YearFormed = rs.getInt("YearFormed");
-                                String Subject = rs.getString("Subject");
-                                String GroupName = rs.getString("GroupName");
-                                String PublisherAddress = rs.getString("PublisherAddress");
-                                String PublisherPhone = rs.getString("PublisherPhone");
-                                String PublisherEmail = rs.getString("PublisherEmail");
-                                String BookTitle = rs.getString("BookTitle");
-                                int YearPublished = rs.getInt("YearPublished");
-                                int NumberPages = rs.getInt("NumberPages");
-                                System.out.printf(displayFormatOp4, dispNull(PublisherName), dispNull(PublisherAddress), dispNull(PublisherPhone),
-                                        dispNull(PublisherEmail), dispNull(GroupName), dispNull(HeadWriter), YearFormed, dispNull(Subject),
-                                        dispNull(BookTitle), YearPublished, NumberPages);
-                            }
+                        System.out.println("Looking for info on publisher " + pub + ".\nOne moment please...");   
+                        
+                        sql = "select publishername from publishers where publishername = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1,pub);
+                        rs=pstmt.executeQuery();
+                        
+                        if(false==rs.next()){
+                            System.out.println("Publisher "+pub+" does Not Exist");
+                            break;
                         }
-                        System.out.println();            
-                        break;
+                        
+                        sql = "SELECT * FROM Publishers NATURAL JOIN Books Natural Join WritingGroups where PublisherName = ?";                        
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1, pub);
+                        
+                        rs = pstmt.executeQuery();                    
+
+                        while(rs.next()){
+                            pub = rs.getString(1);                            
+                            String HeadWriter = rs.getString(2);
+                            String YearFormed = rs.getString(3);
+                            String Subject = rs.getString(4);
+                            String GroupName = rs.getString(5);
+                            String PublisherAddress = rs.getString(6);
+                            String PublisherPhone = rs.getString(7);
+                            String PublisherEmail = rs.getString(8);
+                            String BookTitle = rs.getString(9);
+                            String YearPublished = rs.getString(10);
+                            String NumberPages = rs.getString(11);
+
+                            System.out.printf(displayFormatOp4, "Publisher Name", "Publisher Address", "Publisher Phone", "Publisher Email",
+                            "Group Name", "Head Writer", "Year Formed", "Subject", "Book Title", "Year Published", "Num Of Pages");
+
+                            System.out.printf(displayFormatOp4, dispNull(pub), dispNull(PublisherAddress), dispNull(PublisherPhone),
+                                dispNull(PublisherEmail), dispNull(GroupName), dispNull(HeadWriter), dispNull(YearFormed), dispNull(Subject),
+                                dispNull(BookTitle), dispNull(YearPublished), dispNull(NumberPages));
+                            
+                        }
+                        
+                        
+                        System.out.println();
+                        rs.close();
+                        break;                
                     
+                    //show books
                     case 5:
                     
                         sql = "SELECT GroupName, BookTitle, PublisherName, YearPublished, NumberPages FROM Books";
@@ -225,56 +288,80 @@ public class JDBCSampleSource {
                         rs.close();
                         break;
                                                            
-                
+                    //show book information
                     case 6:
                   
                     
                         System.out.println("Enter a book's name: ");
                         String book = in.nextLine();
+                        
+                        System.out.println("Enter the group name");
+                        String gname = in.nextLine();
 
                         //Shows the users input
                         System.out.println("\nLooking for the info book " + book + ", One moment please...");
 
-                        stmt = conn.createStatement();
-                        sql = "SELECT * FROM BOOKS INNER JOIN WritingGroups USING (GroupName) INNER JOIN Publishers USING (PublisherName)";
-                        rs = stmt.executeQuery(sql);
+                        
+                        sql = "SELECT * FROM Books NATURAL JOIN PUBLISHERS NATURAL JOIN WritingGroups where GroupName = ? and BookTitle = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1,gname);
+                        pstmt.setString(2,book);
+                        rs = pstmt.executeQuery();
+                        
+                        
+                        if (rs.next()) {               
+                            gname = rs.getString(1);        
+                            String btitle = rs.getString(2);      
+                            String pname = rs.getString(3);
+                            String year = rs.getString(4);
+                            String pages = rs.getString(5);
+                            String paddy = rs.getString(6);
+                            String pphone = rs.getString(7);
+                            String pemail = rs.getString(8);
+                            String hwriter = rs.getString(9);
+                            String yformed = rs.getString(10);
+                            String sub = rs.getString(11);
+                            //System.out.println(btitle+" "+pname+" "+year+" "+pages);
+                                                             // Print the column values
+                            System.out.printf(displayFormatOp5, "Group Name", "Publisher Name", "Book Title", "Year Published", "Number of Pages","Publisher Address", "Publisher Phone","Publisher Email", "Head Writer", "year Formed","Subject");
 
-                        System.out.printf(displayFormatOp5, "Book Title", "Year Published", "Num Of Pages", "Publisher Name", "Publisher Address",
-                                "Publisher Phone", "Publisher Email", "Group Name", "Head Writer", "Year Formed", "Subject");
-                        while(rs.next()){
-                            String BookTitle = rs.getString("BookTitle");
-                            if(BookTitle.equals(book)){
-                                String HeadWriter = rs.getString("HeadWriter");
-                                int YearFormed = rs.getInt("YearFormed");
-                                String Subject = rs.getString("Subject");
-                                String GroupName = rs.getString("GroupName");
-                                String PublisherName = rs.getString("PublisherName");
-                                String PublisherAddress = rs.getString("PublisherAddress");
-                                String PublisherPhone = rs.getString("PublisherPhone");
-                                String PublisherEmail = rs.getString("PublisherEmail");
-                                int YearPublished = rs.getInt("YearPublished");
-                                int NumberPages = rs.getInt("NumberPages");
-                                System.out.printf(displayFormatOp5, dispNull(BookTitle), dispNull(HeadWriter), YearPublished, NumberPages, dispNull(PublisherName), dispNull(PublisherAddress),
-                                        dispNull(PublisherPhone), dispNull(PublisherEmail), dispNull(GroupName), dispNull(HeadWriter), YearFormed, dispNull(Subject));     
-
-                            }
+                            System.out.printf(displayFormatOp5, dispNull(gname),dispNull(pname),dispNull(btitle),dispNull(year),dispNull(pages),dispNull(paddy),dispNull(pphone),dispNull(pemail),dispNull(hwriter),dispNull(yformed),dispNull(sub));  
                         }
+                        else{
+                            System.out.println("Could not find book " + book + " create by " + gname + " in the database. ");
+                        }
+
                         System.out.println();
                         break;
                     
-                
+                    //input new book
                     case 7:
                     
-                       
-                        
-
                         //get user input
                         System.out.println("Enter group name");
                         String groupname = in.nextLine();
+                        sql = "select groupname from writinggroups where groupname = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1,groupname);
+                        rs=pstmt.executeQuery();
+                        
+                        if(false==rs.next()){
+                            System.out.println("Group Name Does Not Exist");
+                            break;
+                        }
                         System.out.println("Enter Book title");
                         String booktitle = in.nextLine();
                         System.out.println("Enter Publisher's Name");
                         String pname = in.nextLine();
+                        sql = "select publishername from publishers where publishername = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1,pname);
+                        rs=pstmt.executeQuery();
+                        
+                        if(false==rs.next()){
+                            System.out.println("Publisher Does Not Exist");
+                            break;
+                        }
                         System.out.println("Enter Year Published");
                         String ypublished = in.nextLine();
                         System.out.println("Enter the number of pages");
@@ -288,64 +375,117 @@ public class JDBCSampleSource {
                         pstmt.setString(3, pname);
                         pstmt.setString(4, ypublished);
                         pstmt.setString(5, numpages);
-                        pstmt.execute();
+                        
+                        try{
+                            pstmt.execute();
+                        }
+                        catch(SQLException r){
+                            System.out.println("failed to insert book");  
+                        }
                         break;
                 
+                        
+                    //replace pubilsher    
                     case 8:
 
                         //execute prepared input
                         
-
-                        //get user input
-                        System.out.println("Enter Publisher Name");
-                        pname = in.nextLine();
-                        System.out.println("Enter Publisher Address");
-                        String paddress = in.nextLine();
-                        System.out.println("Enter Publisher's Phone");
-                        String pphone = in.nextLine();
-                        System.out.println("Enter Publisher Email");
-                        String pemail = in.nextLine();
-
-                        //creating the sql statement
-                        sql = "insert into publishers(PublisherName, PublisherAddress,PublisherPhone,PublisherEmail) values(?,?,?,?)";
-                        pstmt = conn.prepareStatement(sql);
-                        pstmt.setString(1, pname);
-                        pstmt.setString(2, paddress);
-                        pstmt.setString(3,pphone);
-                        pstmt.setString(4, pemail);
-                        pstmt.execute();
-                        //updating old publisher
-                        System.out.println("Input the publisher being bought out by " + pname);
+                        
+                            //updating old publisher
+                        System.out.println("Input the publisher being bought out");
                         String oldpname = in.nextLine();
+                        
+                        sql = "select booktitle from books where publishername = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1,oldpname);
+                        rs=pstmt.executeQuery();
+                        
+                        if(false==rs.next()){
+                            System.out.println("Publisher Does Not Exist");
+                            break;
+                        }
+                      
+                        while(true){    
+                            //get user input
+                            System.out.println("Enter Publisher Name");
+                            pname = in.nextLine();
+                            System.out.println("Enter Publisher Address");
+                            String paddress = in.nextLine();
+                            System.out.println("Enter Publisher's Phone");
+                            String pphone = in.nextLine();
+                            System.out.println("Enter Publisher Email");
+                            String pemail = in.nextLine();
+
+                            //creating the sql statement
+                     
+                            sql = "insert into publishers(PublisherName, PublisherAddress,PublisherPhone,PublisherEmail) values(?,?,?,?)";
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.setString(1, pname);
+                            pstmt.setString(2, paddress);
+                            pstmt.setString(3,pphone);
+                            pstmt.setString(4, pemail);
+                            try{
+                                pstmt.execute();
+                                break;
+                            }
+                            catch(SQLIntegrityConstraintViolationException y){
+                                System.out.println("Publisher Already Exists");
+                                
+                            }
+                            catch(SQLException j){
+                                System.out.println("Something Went Wrong");
+                            }
+                        }
+                        
+                        //update publisher
                         sql = "update books set publishername = ? where publishername = ?";
                         pstmt = conn.prepareStatement(sql);
                         pstmt.setString(1,pname);
                         pstmt.setString(2,oldpname);
                         pstmt.execute();
-
+                        
                         //delete old publisher
                         sql = "delete from publishers where publishername = ?";
                         pstmt = conn.prepareStatement(sql);
                         pstmt.setString(1,oldpname);
                         pstmt.execute();
                         System.out.println("All books published by "+ oldpname +" is now published by "+ pname);
+
                         break;
                 
-                    case 9: 
+                    //remove book    
+                    case 9:
+                    
+                        //get user input
                         System.out.println("Enter Group Name");
-                        String gname = in.nextLine();
+                        gname = in.nextLine();
                         System.out.println("Enter Book Title");
                         String btitle = in.nextLine();
-                        pstmt = null;
+
+
                         sql = "Delete from books where GroupName = ? and booktitle = ?";
-                        pstmt = conn.prepareStatement(sql);
-                        pstmt.setString(1,gname);
+                        //checks to see if the book actually exists and the publisher itself
+                        String sqlbook = "SELECT GroupName, BookTitle, PublisherName, YearPublished, NumberPages FROM Books NATURAL JOIN PUBLISHERS NATURAL JOIN WritingGroups where GroupName = ? and BookTitle = ?";                            
+
+                        pstmt = conn.prepareStatement(sqlbook);
+                        pstmt.setString(1, gname);
                         pstmt.setString(2, btitle);
-                        pstmt.execute();
-                        System.out.println();
-                        System.out.println("The book " + btitle + " created by " + gname + " has been removed.");
-                        break;
-                
+
+                        rs = pstmt.executeQuery();
+                        if(rs.next()){
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.setString(1, gname);
+                            pstmt.setString(2, btitle);
+                            pstmt.executeUpdate();
+                            pstmt.close();
+                            System.out.println("Deleted " + btitle + " successfully.");
+                            break;
+                        }else{                     
+                            System.out.println("Could not find book " + btitle + " to delete.");
+                            break;
+                        }
+                    
+                    //end code
                     case 10:
                         stmt.close();
                         conn.close();
@@ -355,11 +495,13 @@ public class JDBCSampleSource {
                 }
             }
            while(choice != 10);
+        
             
         } catch (SQLException se) {
             //Handle errors for JDBC
             se.printStackTrace();
-        } catch (Exception e) {
+            
+        }  catch (Exception e) {
             //Handle errors for Class.forName
             e.printStackTrace();
         } finally {
